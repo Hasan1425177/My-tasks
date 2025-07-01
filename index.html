@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <title>مدير المهام المتقدم</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background: linear-gradient(to right, #667eea, #764ba2);
+      color: #333;
+      margin: 0;
+      padding: 0;
+      direction: rtl;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 50px auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .task-form {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    input[type="text"], input[type="date"], input[type="time"], select {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    button {
+      background-color: #28c76f;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #20a45f;
+    }
+
+    .filter-btn {
+      background-color: #ff8c00;
+      color: white;
+      padding: 10px 15px;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      margin: 10px;
+      transition: background-color 0.3s;
+    }
+
+    .filter-btn:hover {
+      background-color: #e57b00;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    table th, table td {
+      border: 1px solid #ccc;
+      padding: 12px;
+      text-align: center;
+    }
+
+    table th {
+      background-color: #f0f0f0;
+    }
+
+    .done-row {
+      background-color: #d4ffd4;
+      text-decoration: line-through;
+    }
+
+    .actions span {
+      cursor: pointer;
+      margin: 0 5px;
+      font-size: 18px;
+    }
+
+    .log {
+      margin-top: 30px;
+      background: #eef;
+      padding: 15px;
+      border-radius: 8px;
+    }
+
+    .log h3 {
+      margin-top: 0;
+    }
+
+    .log ul {
+      padding: 0;
+      list-style: none;
+    }
+
+    .log li {
+      font-size: 14px;
+      margin-bottom: 5px;
+    }
+
+    .ai-link {
+      display: block;
+      text-align: center;
+      background-color: #28c76f;
+      color: white;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 30px;
+      text-decoration: none;
+    }
+
+    .ai-link:hover {
+      background-color: #20a45f;
+    }
+
+    /* زر اللغة */
+    .lang-btn {
+      background-color: #ff6347;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      position: absolute;
+      top: 10px;
+      left: 20px;
+    }
+
+    .lang-btn:hover {
+      background-color: #e5533c;
+    }
+
+    /* تنسيق زر المهام السابقة */
+    .previous-tasks-btn {
+      text-align: center;
+      background-color: #ff8c00;
+      color: white;
+      padding: 12px 18px;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 30px;
+      text-decoration: none;
+      display: block;
+    }
+
+    .previous-tasks-btn:hover {
+      background-color: #e57b00;
+    }
+
+    .previous-tasks {
+      display: none;
+      margin-top: 30px;
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- زر اللغة -->
+    <button class="lang-btn" onclick="toggleLanguage()" id="langBtn">EN</button>
+
+    <div class="header">
+      <h1 id="appTitle">📋 مهامي</h1>
+    </div>
+
+    <!-- نموذج إضافة مهمة -->
+    <div class="task-form">
+      <input type="text" id="taskInput" placeholder="أدخل اسم المهمة...">
+      <input type="date" id="taskDate">
+      <input type="time" id="taskTime">
+      <select id="taskCategory">
+        <option value="...<"...</option>
+        <option value="منزلي">منزلي</option>
+        <option value="عمل">عمل</option>
+        <option value="رياضي">رياضي</option>
+        <option value="غير ذلك">غير ذلك</option>
+      </select>
+      <button onclick="addTask()" id="addButton">➕ إضافة</button>
+    </div>
+
+    <!-- الفلاتر -->
+    <div class="filters">
+      <button class="filter-btn filter-completed" onclick="filterTasks('completed')" id="filterCompleted">المهام المنجزة</button>
+      <button class="filter-btn filter-pending" onclick="filterTasks('pending')" id="filterPending">المهام المتبقية</button>
+      <button class="filter-btn filter-all" onclick="filterTasks('all')" id="filterAll">كل المهام</button>
+    </div>
+
+    <!-- جدول المهام -->
+    <table>
+      <thead>
+        <tr>
+          <th id="taskNameHeader">اسم المهمة</th>
+          <th id="taskDateHeader">تاريخ المهمة</th>
+          <th id="taskTimeHeader">وقت المهمة</th>
+          <th id="taskCategoryHeader">التصنيف</th>
+          <th id="taskStatusHeader">الحالة</th>
+          <th id="taskActionsHeader">الخيارات</th>
+        </tr>
+      </thead>
+      <tbody id="taskTableBody"></tbody>
+    </table>
+
+    <div class="log">
+      <h3 id="logTitle">📝 سجل المهام</h3>
+      <ul id="logList"></ul>
+    </div>
+
+    <!-- زر محادثة مع الذكاء الاصطناعي -->
+    <a href="javascript:void(0);" onclick="openChatWindow()" class="ai-link" id="chatBtn">ابدأ محادثة مع الذكاء الاصطناعي</a>
+
+    <!-- زر لعرض المهام السابقة -->
+    <a href="javascript:void(0);" onclick="togglePreviousTasks()" class="previous-tasks-btn" id="previousTasksBtn">عرض المهام السابقة</a>
+
+    <!-- عرض المهام السابقة -->
+    <div class="previous-tasks" id="previousTasks">
+      <h3 id="previousTasksTitle">الـمهام السابقة</h3>
+      <table>
+        <thead>
+          <tr>
+            <th id="previousTaskNameHeader">اسم المهمة</th>
+            <th id="previousTaskDateHeader">تاريخ المهمة</th>
+            <th id="previousTaskTimeHeader">وقت المهمة</th>
+            <th id="previousTaskCategoryHeader">التصنيف</th>
+            <th id="previousTaskStatusHeader">الحالة</th>
+          </tr>
+        </thead>
+        <tbody id="previousTasksBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const taskInput = document.getElementById('taskInput');
+    const taskDate = document.getElementById('taskDate');
+    const taskTime = document.getElementById('taskTime');
+    const taskCategory = document.getElementById('taskCategory');
+    const taskTableBody = document.getElementById('taskTableBody');
+    const logList = document.getElementById('logList');
+    const langBtn = document.getElementById('langBtn');
+    const appTitle = document.getElementById('appTitle');
+    const taskNameHeader = document.getElementById('taskNameHeader');
+    const taskDateHeader = document.getElementById('taskDateHeader');
+    const taskTimeHeader = document.getElementById('taskTimeHeader');
+    const taskCategoryHeader = document.getElementById('taskCategoryHeader');
+    const taskStatusHeader = document.getElementById('taskStatusHeader');
+    const taskActionsHeader = document.getElementById('taskActionsHeader');
+    const logTitle = document.getElementById('logTitle');
+    const chatBtn = document.getElementById('chatBtn');
+    const previousTasksBtn = document.getElementById('previousTasksBtn');
+    const previousTasksTitle = document.getElementById('previousTasksTitle');
+    const previousTaskNameHeader = document.getElementById('previousTaskNameHeader');
+    const previousTaskDateHeader = document.getElementById('previousTaskDateHeader');
+    const previousTaskTimeHeader = document.getElementById('previousTaskTimeHeader');
+    const previousTaskCategoryHeader = document.getElementById('previousTaskCategoryHeader');
+    const previousTaskStatusHeader = document.getElementById('previousTaskStatusHeader');
+    const addButton = document.getElementById('addButton');
+    const filterCompleted = document.getElementById('filterCompleted');
+    const filterPending = document.getElementById('filterPending');
+    const filterAll = document.getElementById('filterAll');
+
+    let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+    let previousTasksList = JSON.parse(localStorage.getItem('previousTasks')) || [];
+    let currentLanguage = 'ar';
+
+    function renderTasks() {
+      taskTableBody.innerHTML = '';
+      logList.innerHTML = '';
+      tasks.forEach((task, index) => {
+        const row = document.createElement('tr');
+        if (task.done) row.classList.add('done-row');
+
+        row.innerHTML = `
+          <td>${task.text}</td>
+          <td>${task.date || '—'}</td>
+          <td>${task.time || '—'}</td>
+          <td>${task.category}</td>
+          <td>${task.done ? '✅ منجزة' : '❌ غير منجزة'}</td>
+          <td class="actions">
+            <span title="تأشير كمكتملة" onclick="toggleDone(${index})">✅</span>
+            <span title="تعديل المهمة" onclick="editTask(${index})">✏️</span>
+            <span title="حذف المهمة" onclick="deleteTask(${index})">🗑️</span>
+          </td>
+        `;
+        taskTableBody.appendChild(row);
+
+        const logItem = document.createElement('li');
+        logItem.textContent = `${task.text} - ${task.date || 'بدون تاريخ'} - ${task.done ? '✅ منجزة' : '❌ غير منجزة'}`;
+        logList.appendChild(logItem);
+      });
+
+      saveTasks();
+    }
+
+    function addTask() {
+      const text = taskInput.value.trim();
+      const date = taskDate.value;
+      const time = taskTime.value;
+      const category = taskCategory.value;
+
+      if (text === '') {
+        alert('يرجى إدخال اسم المهمة');
+        return;
+      }
+
+      tasks.push({ text, date, time, category, done: false });
+      taskInput.value = '';
+      taskDate.value = '';
+      taskTime.value = '';
+      renderTasks();
+    }
+
+    function toggleDone(index) {
+      tasks[index].done = !tasks[index].done;
+      renderTasks();
+    }
+
+    function deleteTask(index) {
+      if (confirm('هل أنت متأكد من حذف المهمة؟')) {
+        tasks.splice(index, 1);
+        renderTasks();
+      }
+    }
+
+    function saveTasks() {
+      localStorage.setItem('tasks', JSON.stringify(tasks));
+    }
+
+    function openChatWindow() {
+      window.open('https://chat.openai.com', '_blank');
+    }
+
+    function togglePreviousTasks() {
+      previousTasks.style.display = previousTasks.style.display === 'none' ? 'block' : 'none';
+      renderPreviousTasks();
+    }
+
+    function renderPreviousTasks() {
+      previousTasksBody.innerHTML = '';
+      tasks.forEach((task, index) => {
+        const taskDate = new Date(task.date + ' ' + task.time);
+        const now = new Date();
+        const diffTime = now - taskDate;
+        const twentyFourHours = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
+        if (diffTime > twentyFourHours) {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${task.text}</td>
+            <td>${task.date}</td>
+            <td>${task.time}</td>
+            <td>${task.category}</td>
+            <td>${task.done ? '✅ منجزة' : '❌ غير منجزة'}</td>
+          `;
+          previousTasksBody.appendChild(row);
+          previousTasksList.push(task);
+          tasks.splice(index, 1);
+        }
+      });
+
+      saveTasks();
+      savePreviousTasks();
+    }
+
+    function savePreviousTasks() {
+      localStorage.setItem('previousTasks', JSON.stringify(previousTasksList));
+    }
+
+    function filterTasks(status) {
+      let filteredTasks = tasks;
+
+      if (status === 'completed') {
+        filteredTasks = tasks.filter(task => task.done);
+      } else if (status === 'pending') {
+        filteredTasks = tasks.filter(task => !task.done);
+      }
+
+      taskTableBody.innerHTML = '';
+      filteredTasks.forEach(task => {
+        const row = document.createElement('tr');
+        if (task.done) row.classList.add('done-row');
+
+        row.innerHTML = `
+          <td>${task.text}</td>
+          <td>${task.date || '—'}</td>
+          <td>${task.time || '—'}</td>
+          <td>${task.category}</td>
+          <td>${task.done ? '✅ منجزة' : '❌ غير منجزة'}</td>
+          <td class="actions">
+            <span title="تأشير كمكتملة" onclick="toggleDone(${task.index})">✅</span>
+            <span title="تعديل المهمة" onclick="editTask(${task.index})">✏️</span>
+            <span title="حذف المهمة" onclick="deleteTask(${task.index})">🗑️</span>
+          </td>
+        `;
+        taskTableBody.appendChild(row);
+      });
+    }
+
+    function toggleLanguage() {
+      if (currentLanguage === 'ar') {
+        currentLanguage = 'en';
+        document.body.dir = 'ltr';
+        langBtn.textContent = "AR";
+
+        // ترجمة النصوص إلى الإنجليزية
+        appTitle.textContent = "📋 My Tasks";
+        taskNameHeader.textContent = "Task Name";
+        taskDateHeader.textContent = "Task Date";
+        taskTimeHeader.textContent = "Task Time";
+        taskCategoryHeader.textContent = "Category";
+        taskStatusHeader.textContent = "Status";
+        taskActionsHeader.textContent = "Actions";
+        logTitle.textContent = "📝 Task Log";
+        chatBtn.textContent = "Start AI Chat";
+        previousTasksBtn.textContent = "Show Previous Tasks";
+        previousTasksTitle.textContent = "Previous Tasks";
+        filterCompleted.textContent = "Completed Tasks";
+        filterPending.textContent = "Pending Tasks";
+        filterAll.textContent = "All Tasks";
+        addButton.textContent = "➕ Add Task";
+      } else {
+        currentLanguage = 'ar';
+        document.body.dir = 'rtl';
+        langBtn.textContent = "EN";
+
+        // ترجمة النصوص إلى العربية
+        appTitle.textContent = "📋 مهامي";
+        taskNameHeader.textContent = "اسم المهمة";
+        taskDateHeader.textContent = "تاريخ المهمة";
+        taskTimeHeader.textContent = "وقت المهمة";
+        taskCategoryHeader.textContent = "التصنيف";
+        taskStatusHeader.textContent = "الحالة";
+        taskActionsHeader.textContent = "الخيارات";
+        logTitle.textContent = "📝 سجل المهام";
+        chatBtn.textContent = "ابدأ محادثة مع الذكاء الاصطناعي";
+        previousTasksBtn.textContent = "عرض المهام السابقة";
+        previousTasksTitle.textContent = "المهام السابقة";
+        filterCompleted.textContent = "المهام المنجزة";
+        filterPending.textContent = "المهام المتبقية";
+        filterAll.textContent = "كل المهام";
+        addButton.textContent = "➕ إضافة مهمة";
+      }
+    }
+
+    renderTasks();
+  </script>
+</body>
+</html>
